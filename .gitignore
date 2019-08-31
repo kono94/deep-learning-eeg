@@ -1,3 +1,5 @@
-venv/
+.venv/
 MNIST_data
 .idea/
+.venv
+.vscode
