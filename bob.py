@@ -33,7 +33,7 @@ def load_data(subj, series=range(1, 9), prefix='train'):
 def compute_features(X, scale=None):
     X0 = [x[:, 0] for x in X]
     X = np.concatenate(X, axis=0)
-    F = [];
+    F = []
     for fc in np.linspace(0, 1, 11)[1:]:
         b, a = butter(3, fc / 250.0, btype='lowpass')
         F.append(np.concatenate([lfilter(b, a, x0) for x0 in X0], axis=0)[:, np.newaxis])
