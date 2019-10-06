@@ -1,3 +1,5 @@
+matplotlib
+mne
 sklearn
 keras
 numpy
