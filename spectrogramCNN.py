@@ -46,24 +46,15 @@ fs = 250
 channelsToUse = [2,3,4]
 numberOfChannels = len(channelsToUse)
 classes = 2
-windowShift = 25
+windowShift = 5
 windowSize = 512
-X = np.loadtxt("data/2019-10-16-17-30_MaximilianWernerMitHand.csv", usecols=channelsToUse, delimiter=",", skiprows=1)
+X = np.loadtxt("data/all.csv", usecols=channelsToUse, delimiter=",", skiprows=1)
 # get label
-Y = np.loadtxt("data/2019-10-16-17-30_MaximilianWernerMitHand.csv", usecols=[8],dtype=np.str, delimiter=",", skiprows=1)
+Y = np.loadtxt("data/all.csv", usecols=[8],dtype=np.str, delimiter=",", skiprows=1)
 # split data to corresponding label
 
-cropPuffer = []
-for i in range(0, numberOfChannels, 1):
-    l = []
-    cropPuffer.append(l)
-
-
-classPuffer = []
-for i in range(0, classes, 1):
-    l = []
-    classPuffer.append(l)
-
+cropPuffer = [[] for i in range(0, numberOfChannels, 1)]
+classPuffer = [[] for i in range(0, classes, 1)]
 
 def build_crops(channelCrops, label, classPuffer):
     minSizeOfCrop = len(channelCrops[0])
@@ -114,14 +105,14 @@ for i in range(0, len(X), 1):
                 cropPuffer[ch] = []
     for ch in range(0, numberOfChannels, 1):
         cropPuffer[ch].append(X[i][ch])
-        if prevLabel == "none" and len(cropPuffer[ch]) > 250:
+        if prevLabel == "none" and len(cropPuffer[ch]) > 128:
             cropPuffer[ch].pop(0)
     prevLabel = Y[i]
 
 # generate spectogram
 spectroWindowSize = 128
 spectroStep = 8
-for i in range(0, 1, 1):
+for i in range(0, 0, 1):
     plt.xlabel("Sample")
     plt.ylabel("Voltage in mV")
     plt.plot(classPuffer[0][i][0])
@@ -139,7 +130,6 @@ for i in range(0, 1, 1):
 
 print(len(classPuffer[0]))
 print(len(classPuffer[1]))
-
 
 minClassSize = len(classPuffer[0])
 for i in range(0, len(classPuffer), 1):
@@ -161,9 +151,14 @@ for i in range(0, minClassSize, 1):
 print(np.shape(mX))
 print(np.shape(mY))
 
+
+rng_state = np.random.get_state()
+np.random.shuffle(mX)
+np.random.set_state(rng_state)
+np.random.shuffle(mY)
+
 #create model
 model = Sequential()
-# 2-sec input
 input_shape = (numberOfChannels, windowSize)
 spectroWindowSize = 128
 spectroWindowShift = 8
@@ -175,51 +170,58 @@ model.add(Conv2D(24, kernel_size=(12,12), input_shape=(64, 64, numberOfChannels)
 model.add(BatchNormalization())
 model.add(MaxPool2D(pool_size=(2,2)))
 model.add(ReLU())
-model.add(Dropout(rate=0.2))
+model.add(Dropout(rate=0.5))
 
 #2
 model.add(Conv2D(48, kernel_size=(8,8), activation='relu'))
 model.add(BatchNormalization())
 model.add(MaxPool2D(pool_size=(2,2)))
 model.add(ReLU())
-model.add(Dropout(rate=0.2))
+model.add(Dropout(rate=0.5))
 
 #3
 model.add(Conv2D(96, kernel_size=(4,4), activation='relu'))
 model.add(BatchNormalization())
 model.add(MaxPool2D(pool_size=(2,2)))
 model.add(ReLU())
-model.add(Dropout(rate=0.2))
+model.add(Dropout(rate=0.5))
 
 #4
 model.add(Flatten())
 model.add(Dense(classes, activation='softmax'))
 
-model.compile('adam', 'categorical_crossentropy')
+model.compile('adam', 'categorical_crossentropy', metrics=['accuracy', 'mse'])
 
 #
-rng_state = np.random.get_state()
-np.random.shuffle(mX)
-np.random.set_state(rng_state)
-np.random.shuffle(mY)
-
 trainSplit = 0.8
-batch = 32
-epoch = 20
+batch = 128
+epoch = 40
 size = len(mX)
 model.fit(mX[0:int(size*0.8)], mY[0:int(size*0.8)], batch_size=batch, epochs=epoch, validation_data=(mX[int(size*0.8):int(size-1)], mY[int(size*0.8):int(size-1)]))
-
 model.summary()
 model.save('models/temp_model.h5')
 
 # Now saved, let's load it.
 model2 = load_model('models/temp_model.h5',
   custom_objects={'Spectrogram':Spectrogram})
-model2.summary()
+#model2.summary()
 
+rightPred = 0
+wrongPred = 0
 for i in range(int(size*0.8), int(size), 1):
     p = np.array([mX[i]])
     q = mY[i]
-    pred1 = model.predict_classes(p)
-    prob1 = model.predict(p)
+    pred1 = model2.predict_classes(p)
+    prob1 = model2.predict(p)
     print("should predict ", q, " predicted", pred1, " Prob", prob1)
+    index = 0
+    for j in range(0, len(q), 1):
+        if q[j] == 1:
+            index = j
+    if index == pred1[0]:
+        rightPred += 1
+    else:
+        wrongPred += 1
+
+print(rightPred)
+print(wrongPred)
