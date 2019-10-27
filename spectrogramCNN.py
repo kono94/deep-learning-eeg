@@ -3,10 +3,11 @@ import numpy as np
 from scipy import fftpack, signal, stats
 from skimage import util
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, Flatten, BatchNormalization, MaxPool2D, ReLU, Dropout
+from keras.layers import Dense, Conv2D, Flatten, BatchNormalization, MaxPool2D, ReLU, Dropout, Lambda
 from kapre.time_frequency import Spectrogram
 from numpy.random import seed
 seed(1)
+np.random.seed(1)
 
 ########### FILTER FUNCTIONS #############
 def butter_highpass_filter(data, cutoff, fs, order=5):
@@ -194,21 +195,40 @@ model.compile('adam', 'categorical_crossentropy', metrics=['accuracy', 'mse'])
 
 #
 trainSplit = 0.8
-batch = 128
-epoch = 40
+batch = 256
+epoch = 150
 size = len(mX)
-model.fit(mX[0:int(size*0.8)], mY[0:int(size*0.8)], batch_size=batch, epochs=epoch, validation_data=(mX[int(size*0.8):int(size-1)], mY[int(size*0.8):int(size-1)]))
+history = model.fit(mX, mY, validation_split=0.25, batch_size=batch, epochs=epoch)
+print(history)
+print(history.history)
 model.summary()
-model.save('models/temp_model.h5')
+model.save('models/tempModel.h5')
+# Plot training & validation accuracy values
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
+
+# Plot training & validation loss values
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
 
 # Now saved, let's load it.
-model2 = load_model('models/temp_model.h5',
+model2 = load_model('models/tempModel.h5',
   custom_objects={'Spectrogram':Spectrogram})
 #model2.summary()
 
 rightPred = 0
 wrongPred = 0
-for i in range(int(size*0.8), int(size), 1):
+for i in range(int(size*0.99), int(size), 1):
     p = np.array([mX[i]])
     q = mY[i]
     pred1 = model2.predict_classes(p)
