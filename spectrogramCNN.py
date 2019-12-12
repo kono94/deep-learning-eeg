@@ -59,6 +59,10 @@ classPuffer = [[] for i in range(0, classes, 1)]
 
 def build_crops(channelCrops, label, classPuffer):
     minSizeOfCrop = len(channelCrops[0])
+    if(len(channelCrops[0]) < windowSize):
+        print(len(channelCrops[0]))
+        return False
+   
     for ch in range(0, numberOfChannels, 1):
         data = channelCrops[ch]
         N = len(data)
@@ -80,6 +84,10 @@ def build_crops(channelCrops, label, classPuffer):
         if minSizeOfCrop > len(channelCrops[ch]):
             minSizeOfCrop = len(channelCrops[ch])
 
+    for i in range(0, len(channelCrops)):
+        if(len(channelCrops[0]) < windowSize):
+            print("fail" + channelCrops[0])
+            return False
 
     totalNumberOfCrops = int((minSizeOfCrop- windowSize)/windowShift) -1
     for i in range(0, totalNumberOfCrops, 1):
