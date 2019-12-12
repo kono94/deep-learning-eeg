@@ -86,7 +86,7 @@ def build_crops(channelCrops, label, classPuffer):
 
     for i in range(0, len(channelCrops)):
         if(len(channelCrops[0]) < windowSize):
-            print("fail" + channelCrops[0])
+            print("fail", channelCrops[0])
             return False
 
     totalNumberOfCrops = int((minSizeOfCrop- windowSize)/windowShift) -1
