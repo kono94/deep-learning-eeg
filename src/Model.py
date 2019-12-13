@@ -55,7 +55,7 @@ def plotAndSaveHistory(history):
     plt.legend(['Train', 'Test'], loc='upper left')
     plt.show()
     currentTimestamp = str(int(round(time.time())))
-    plt.savefig('accucary' + currentTimestamp + '.png')
+    plt.savefig('models/accucary' + currentTimestamp + '.png')
 
     # Plot training & validation loss values
     plt.plot(history.history['loss'])
@@ -65,7 +65,7 @@ def plotAndSaveHistory(history):
     plt.xlabel('Epoch')
     plt.legend(['Train', 'Test'], loc='upper left')
     plt.show()
-    plt.savefig('loss' + currentTimestamp + '.png')
+    plt.savefig('models/loss' + currentTimestamp + '.png')
 
 def loadModel(path):
      print("Loading model from path: ", path)
