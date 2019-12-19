@@ -5,6 +5,7 @@ from scipy import fftpack, signal, stats
 from skimage import util
 from numpy.random import seed
 import sys, getopt, time
+from tensorflow import set_random_seed
 from Filters import butter_bandpass_filter, notch_filter, butter_highpass_filter, normalize, sigma_clipping
 from Model import createMasterCNN, plotAndSaveHistory, loadModel, predict
 from Util import visualizeSpectrogram
@@ -12,7 +13,7 @@ from Mode import Mode
 
 # setting random number generators to ensure some results
 seed(1)
-np.random.seed(1)
+set_random_seed(2)
 
 ###  Train related variables ###
 # 80% training, 20% validation data
@@ -99,7 +100,6 @@ X = np.loadtxt(filePath, usecols=channelsToUse, delimiter=",", skiprows=1)
 print("Loading in labels...")
 Y = np.loadtxt(filePath, usecols=[8],dtype=np.str, delimiter=",", skiprows=1)
 
-
 # split data to corresponding label
 cropPuffer = [[] for i in range(0, numberOfChannels, 1)]
 classPuffer = [[] for i in range(0, numberOfClasses, 1)]
@@ -111,7 +111,7 @@ def build_crops(channelCrops, label, classPuffer):
     if(len(channelCrops[0]) < cropWindowSize):
         print("Filtering crop because length is too small: ", len(channelCrops[0]))
         return False
-   
+    
     for ch in range(0, numberOfChannels, 1):
         data = channelCrops[ch]
         N = len(data)
@@ -126,7 +126,7 @@ def build_crops(channelCrops, label, classPuffer):
         y = butter_bandpass_filter(y, 2, 60, fs)
         # remove high voltage spikes with six sigma clipping
         # +- sigma (default is 4, master thesis uses 6)
-        y = sigma_clipping(y, 4, 4)
+        y = sigma_clipping(y, 6, 6)
         # normalize each session and eletrode
         y = normalize(y)
         channelCrops[ch] = y
