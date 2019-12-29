@@ -144,7 +144,7 @@ if mode is Mode.TRAIN:
 elif mode is Mode.PREDICT:
    (mX, mY) = preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWindowShift, fs)
    # visuals some spectrograms
-   # visualizeSpectrogram(mX, spectroWindowSize, spectroWindowShift, fs, nrOfSpectrogram=1)
+   visualizeSpectrogram(mX, spectroWindowSize, spectroWindowShift, fs, nrOfSpectrogram=1)
    model = loadModel(modelPath)
 
    print("keras.evaluate() result: ", model.evaluate(mX, mY))

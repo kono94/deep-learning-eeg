@@ -7,6 +7,8 @@ from keras.layers import Dense, Conv2D, Flatten, BatchNormalization, MaxPool2D, 
 from kapre.time_frequency import Spectrogram
 import matplotlib.pyplot as plt
 from NetworkType import NetworkType
+from keras.utils.vis_utils import plot_model
+
 
 def createCNN(networkType, numberOfChannels, frameSize, spectroWindowSize, spectroWindowShift, numberOfClasses):
     input_shape = (numberOfChannels, frameSize)
@@ -53,6 +55,7 @@ def loadModel(path):
      custom_objects={'Spectrogram':Spectrogram})
      print("Successfull loaded model in!")
      model.summary()
+     plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
      return model
 
 def predict(model, X, Y, amount=0.1, verbose=1):
