@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.random import seed
+seed(123)
 from scipy import signal, stats
 
 def visualizeSpectrogram(mX, spectroWindowSize, spectroWindowShift, fs, nrOfSpectrogram=1):

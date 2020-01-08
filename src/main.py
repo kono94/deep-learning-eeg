@@ -1,12 +1,11 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from keras.models import load_model
-import tensorflow as tf
-from scipy import fftpack, signal, stats
-from skimage import util
-from numpy.random import seed
-import sys, getopt, time, os
 import random
+random.seed(123)
+import numpy as np
+from numpy.random import seed
+seed(123)
+import tensorflow as tf
+tf.random.set_seed(123)
+import sys, getopt, time, os
 from Model import createCNN, plotAndSaveHistory, loadModel, predict
 from Util import visualizeSpectrogram
 from Mode import Mode
@@ -14,10 +13,6 @@ from PreProcessor import applyFilters, preProcess
 from NetworkType import NetworkType
 
 # setting random number generators to ensure some results
-seed(123)
-random.seed(123)
-tf.random.set_seed(123)
-
 ### Starting parameter
 def help():
     print('-t --train filePath')
@@ -32,7 +27,7 @@ trainSplit = 0.8
 # number of samples to work through before updating the internal model parameters
 batchSize = 512
 # number of passes over the entire dataset
-nrOfEpochs = 3
+nrOfEpochs = 8
 # window size of the generated spectrograms
 spectroWindowSize = 128
 # defines the grade of overlapping between spectrogram windows
@@ -103,20 +98,24 @@ for opt, arg in opts:
 if mode is Mode.PREDICT and modelPath is None:
      raise ValueError("No modelPath (-m, --model) given")
 
-# get raw eeg volt data
-print("Loading in EEG data...")
-X = np.loadtxt(filePath, usecols=channelsToUse, delimiter=",", skiprows=1)
-# get labels
-print("Loading in labels...")
-Y = np.loadtxt(filePath, usecols=[8],dtype=np.str, delimiter=",", skiprows=1)
+
+def loadData():
+    # get raw eeg volt data
+    print("Loading in EEG data...")
+    X = np.loadtxt(filePath, usecols=channelsToUse, delimiter=",", skiprows=1)
+    # get labels
+    print("Loading in labels...")
+    Y = np.loadtxt(filePath, usecols=[8],dtype=np.str, delimiter=",", skiprows=1)
+    return X,Y
 
 model = createCNN(networkToUse, numberOfChannels, cropWindowSize, spectroWindowSize, spectroWindowShift, numberOfClasses)
 
 if mode is Mode.TRAIN:
-    if os.path.exists("data/mX") and useCachedNumpyArrays:
-        mX = np.load("data/mX")
-        mY = np.load("data/mY")
+    if os.path.exists("data/mX.npy") and useCachedNumpyArrays:
+        mX = np.load("data/mX.npy")
+        mY = np.load("data/mY.npy")
     else:
+        X, Y = loadData()
         (mX, mY) = preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWindowShift, fs)
         np.save("data/mX", mX)
         np.save("data/mY", mY)
@@ -130,18 +129,19 @@ if mode is Mode.TRAIN:
 
     # is this really necesary or does keras shuffle the data every epoch?
     # assuming that shuffle=True in keras.fit is shuffling correctly
-    # rng_state = np.random.get_state()
-    # np.random.shuffle(mX)
-    # np.random.set_state(rng_state)
-    # np.random.shuffle(mY)
+    rng_state = np.random.get_state()
+    np.random.shuffle(mX)
+    np.random.set_state(rng_state)
+    np.random.shuffle(mY)
     history = model.fit(mX, mY, shuffle=True, validation_split=(1 - trainSplit), batch_size=batchSize, epochs=nrOfEpochs)
     model.summary()
     model.save('models/model_' + str(int(round(time.time()))) +  '.h5')
     # saving acc and loss graph as png
     plotAndSaveHistory(history)
     # predicting classes for 1% of the dataset mX
-    predict(model, mX, mY, 0.01)
+    # predict(model, mX, mY, 0.01)
 elif mode is Mode.PREDICT:
+   X, Y = loadData()
    (mX, mY) = preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWindowShift, fs)
    # visuals some spectrograms
    visualizeSpectrogram(mX, spectroWindowSize, spectroWindowShift, fs, nrOfSpectrogram=1)

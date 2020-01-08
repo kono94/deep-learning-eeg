@@ -1,5 +1,5 @@
 from Filters import butter_bandpass_filter, notch_filter, butter_highpass_filter, normalize, sigma_clipping
-import sys, getopt, time
+import sys
 import numpy as np
 
 def applyFilters(data, fs):
@@ -25,7 +25,7 @@ def preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWind
     classPuffer = [[] for i in range(0, numberOfClasses, 1)]
 
     # function to prepare the crops used for learning
-    # applies filters, normalizes and generates augmentated data crops 
+    # applies filters, normalizes and generates augmentated data crops
     def build_crops(channelCrops, label, classPuffer):
         minSizeOfCrop = len(channelCrops[0])
         if(len(channelCrops[0]) < cropWindowSize):

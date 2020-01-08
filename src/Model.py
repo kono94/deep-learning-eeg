@@ -1,9 +1,8 @@
 import numpy as np
 import sys
 import time
-import librosa.core.time_frequency
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, Flatten, BatchNormalization, MaxPool2D, ReLU, Dropout, Lambda
+from keras.layers import Dense, Conv2D, Flatten, BatchNormalization, MaxPool2D, ReLU, Dropout
 from kapre.time_frequency import Spectrogram
 import matplotlib.pyplot as plt
 from NetworkType import NetworkType
@@ -11,18 +10,19 @@ from keras.utils.vis_utils import plot_model
 
 
 def createCNN(networkType, numberOfChannels, frameSize, spectroWindowSize, spectroWindowShift, numberOfClasses):
+
     input_shape = (numberOfChannels, frameSize)
     spectrogramLayer = Spectrogram(input_shape=input_shape, n_dft=spectroWindowSize, n_hop=spectroWindowShift, padding='same',
                                     power_spectrogram=2.0, return_decibel_spectrogram=True)
-    if networkType == networkType.CNN_PROPOSED_MASTER_THESIS:
+    if networkType == NetworkType.CNN_PROPOSED_MASTER_THESIS:
         return createProposedNet(spectrogramLayer, numberOfClasses)
-    elif networkType == networkType.CNN_SHALLOW:
+    elif networkType == NetworkType.CNN_SHALLOW:
         return True
-    elif networkType == networkType.CNN_DEEP:
+    elif networkType == NetworkType.CNN_DEEP:
         return True
-    elif networkType == networkType.CNN_PROPOSED_SMALL:
+    elif networkType == NetworkType.CNN_PROPOSED_SMALL:
         return True
-    elif networkType == networkType.CNN_MAXIMLIAN:
+    elif networkType == NetworkType.CNN_MAXIMLIAN:
         return createMaximilianNet(spectrogramLayer, numberOfClasses)
     else:
         raise ValueError("NetworkType not recognized! type: ", networkType)
@@ -86,7 +86,7 @@ def predict(model, X, Y, amount=0.1, verbose=1):
             rightPred += 1
         else:
             wrongPred += 1
-    
+
     print("Correct Predictions: ", rightPred)
     print("Wrong Predictions: ", wrongPred)
     for i in range(0, len(predictedClases)):
