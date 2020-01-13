@@ -7,8 +7,10 @@ def applyFilters(data, fs):
     L = N / fs
     # remove 0.5 hz DC-offset
     y = butter_highpass_filter(data, 0.5, fs)
+
     # remove 50 hz power line frequency
     y = notch_filter(y, 50, fs)
+
     # extract frequencies between 2 and 60 hz
     # typical characteristics for motor imagery
     y = butter_bandpass_filter(y, 2, 60, fs)
@@ -35,7 +37,7 @@ def preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWind
         for ch in range(0, numberOfChannels, 1):
             channelCrops[ch] = applyFilters(channelCrops[ch], fs)
             if minSizeOfCrop > len(channelCrops[ch]):
-                minSizeOfCrop = len(channelCrops[ch])
+               minSizeOfCrop = len(channelCrops[ch])
 
         for i in range(0, len(channelCrops)):
             if(len(channelCrops[0]) < cropWindowSize):
@@ -60,6 +62,11 @@ def preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWind
 
     prevLabel = Y[0]
     dataSetLen = len(X)
+   # xSwap = np.swapaxes(X,0,1)
+   # for ch in range(0, numberOfChannels, 1):
+   #     xSwap[ch] = applyFilters(xSwap[ch], fs)
+	
+   # X = np.swapaxes(xSwap,0,1)
     for i in range(0, dataSetLen, 1):
         sys.stdout.write("Processing csv: %d%% \r" % (i/dataSetLen * 100))
         sys.stdout.flush()

@@ -4,13 +4,14 @@ import numpy as np
 from numpy.random import seed
 seed(123)
 import tensorflow as tf
-tf.random.set_seed(123)
+tf.compat.v1.set_random_seed(123)
 import sys, getopt, time, os
 from Model import createCNN, plotAndSaveHistory, loadModel, predict
 from Util import visualizeSpectrogram
 from Mode import Mode
 from PreProcessor import applyFilters, preProcess
 from NetworkType import NetworkType
+
 
 # setting random number generators to ensure some results
 ### Starting parameter
@@ -27,7 +28,7 @@ trainSplit = 0.8
 # number of samples to work through before updating the internal model parameters
 batchSize = 512
 # number of passes over the entire dataset
-nrOfEpochs = 8
+nrOfEpochs = 50
 # window size of the generated spectrograms
 spectroWindowSize = 128
 # defines the grade of overlapping between spectrogram windows
@@ -39,7 +40,7 @@ spectroWindowShift = 8
 # use saved up numpy arrays to skip preprocessing and test different network configurations
 useCachedNumpyArrays = True
 # network to train with, see ENUM "NetworkType"
-networkToUse = NetworkType.CNN_PROPOSED_MASTER_THESIS
+networkToUse = NetworkType.CNN_PROPOSED_SMALL
 
 channelsToUse = [2,3,5]
 numberOfChannels = len(channelsToUse)
@@ -54,7 +55,7 @@ cropWindowSize = 512
 # amount of timestamps to shift the crop window
 # less means more data augmentation (more crop windows) but more similar data
 # more means less data augmentation but more distinct data
-cropWindowShift = 5
+cropWindowShift = 16
 
 # frequency of the OpenBCI helmet
 fs = 250
@@ -111,29 +112,38 @@ def loadData():
 model = createCNN(networkToUse, numberOfChannels, cropWindowSize, spectroWindowSize, spectroWindowShift, numberOfClasses)
 
 if mode is Mode.TRAIN:
-    if os.path.exists("data/mX.npy") and useCachedNumpyArrays:
-        mX = np.load("data/mX.npy")
-        mY = np.load("data/mY.npy")
+    if os.path.exists("data/trainX.npy") and useCachedNumpyArrays:
+	    trainX = np.load("data/trainX.npy")
+	    trainY = np.load("data/trainY.npy")
+	    testX = np.load("data/testX.npy")
+	    testY = np.load("data/testY.npy")
     else:
         X, Y = loadData()
         (mX, mY) = preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWindowShift, fs)
-        np.save("data/mX", mX)
-        np.save("data/mY", mY)
+        trainX = mX[0:int(len(mX) * trainSplit)]
+        trainY = mY[0:int(len(mY)*trainSplit)]
+        rng_state = np.random.get_state()
+        np.random.shuffle(trainX)
+        np.random.set_state(rng_state)
+        np.random.shuffle(trainY)
+        testX = mX[int(len(mX)*trainSplit):]
+        testY = mY[int(len(mY)*trainSplit):]
+        np.save("data/trainX.npy", trainX)
+        np.save("data/trainY", trainY)
+        np.save("data/testX", testX)
+        np.save("data/testY", testY)
 
+	
     # visualize some spectrograms
     # visualizeSpectrogram(mX, spectroWindowSize, spectroWindowShift, fs, nrOfSpectrogram=1)
 
-    print("X input shape: " , np.shape(mX))
-    print("Label input shape: ", np.shape(mY))
+    print("X input shape: " , np.shape(trainX))
+    print("Label input shape: ", np.shape(trainY))
 
 
     # is this really necesary or does keras shuffle the data every epoch?
     # assuming that shuffle=True in keras.fit is shuffling correctly
-    rng_state = np.random.get_state()
-    np.random.shuffle(mX)
-    np.random.set_state(rng_state)
-    np.random.shuffle(mY)
-    history = model.fit(mX, mY, shuffle=True, validation_split=(1 - trainSplit), batch_size=batchSize, epochs=nrOfEpochs)
+    history = model.fit(trainX, trainY, shuffle=True, validation_data=(testX, testY), batch_size=batchSize, epochs=nrOfEpochs)
     model.summary()
     model.save('models/model_' + str(int(round(time.time()))) +  '.h5')
     # saving acc and loss graph as png

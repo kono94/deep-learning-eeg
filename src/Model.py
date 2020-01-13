@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import time
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, Flatten, BatchNormalization, MaxPool2D, ReLU, Dropout
+from keras.layers import Dense, Conv2D, Flatten, BatchNormalization, MaxPool2D, Activation, Dropout
 from kapre.time_frequency import Spectrogram
 import matplotlib.pyplot as plt
 from NetworkType import NetworkType
@@ -13,7 +13,7 @@ def createCNN(networkType, numberOfChannels, frameSize, spectroWindowSize, spect
 
     input_shape = (numberOfChannels, frameSize)
     spectrogramLayer = Spectrogram(input_shape=input_shape, n_dft=spectroWindowSize, n_hop=spectroWindowShift, padding='same',
-                                    power_spectrogram=2.0, return_decibel_spectrogram=True)
+                                    power_spectrogram=1.0, return_decibel_spectrogram=True)
     if networkType == NetworkType.CNN_PROPOSED_MASTER_THESIS:
         return createProposedNet(spectrogramLayer, numberOfClasses)
     elif networkType == NetworkType.CNN_SHALLOW:
@@ -21,16 +21,18 @@ def createCNN(networkType, numberOfChannels, frameSize, spectroWindowSize, spect
     elif networkType == NetworkType.CNN_DEEP:
         return True
     elif networkType == NetworkType.CNN_PROPOSED_SMALL:
-        return True
+        return createProposedSmall(spectrogramLayer, numberOfClasses)
     elif networkType == NetworkType.CNN_MAXIMLIAN:
         return createMaximilianNet(spectrogramLayer, numberOfClasses)
+    elif networkType == NetworkType.CNN_RAW:
+        return createRawNet(spectrogramLayer, numberOfClasses)
     else:
         raise ValueError("NetworkType not recognized! type: ", networkType)
 
 def plotAndSaveHistory(history):
     # Plot training & validation accuracy values
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
     plt.title('Model accuracy')
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
@@ -55,7 +57,7 @@ def loadModel(path):
      custom_objects={'Spectrogram':Spectrogram})
      print("Successfull loaded model in!")
      model.summary()
-     plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+#     plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
      return model
 
 def predict(model, X, Y, amount=0.1, verbose=1):
@@ -105,21 +107,21 @@ def createProposedNet(spectrogramLayer, outputs):
     model.add(Conv2D(24, kernel_size=(12,12), activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(ReLU())
+    model.add(Activation('relu'))
     model.add(Dropout(rate=0.5))
 
     #2
     model.add(Conv2D(48, kernel_size=(8,8), activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(ReLU())
+    model.add(Activation('relu'))
     model.add(Dropout(rate=0.5))
 
     #3
     model.add(Conv2D(96, kernel_size=(4,4), activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(ReLU())
+    model.add(Activation('relu'))
     model.add(Dropout(rate=0.5))
 
     #4
@@ -129,6 +131,39 @@ def createProposedNet(spectrogramLayer, outputs):
     model.compile('adam', 'categorical_crossentropy', metrics=['accuracy', 'mse'])
     return model
 
+def createProposedSmall(spectrogramLayer, outputs):
+    #create model
+    model = Sequential()
+    model.add(spectrogramLayer)
+
+    #add model layers
+    #1
+    # input_shape=(64, 64, numberOfChannels),
+    model.add(Conv2D(12, kernel_size=(20, 6), activation='relu'))
+    model.add(BatchNormalization())
+    #model.add(MaxPool2D(pool_size=(2,2)))
+    model.add(Activation('relu'))
+    model.add(Dropout(rate=0.3))
+    #2
+    model.add(Conv2D(24, kernel_size=(10,3), activation='relu'))
+    model.add(BatchNormalization())
+    #model.add(MaxPool2D(pool_size=(2,2)))
+    model.add(Activation('relu'))
+    model.add(Dropout(rate=0.3))
+
+    #3
+    #model.add(Conv2D(96, kernel_size=(1,12), activation='relu'))
+    #model.add(BatchNormalization())
+   # model.add(MaxPool2D(pool_size=(2,2)))
+    #model.add(Activation('relu'))
+    #model.add(Dropout(rate=0.5))
+	
+    #4
+    model.add(Flatten())
+    model.add(Dense(outputs, activation='softmax'))
+
+    model.compile('adam', 'categorical_crossentropy', metrics=['accuracy', 'mse'])
+    return model
 
 def createMaximilianNet(spectrogramLayer, outputs):
     #create model
@@ -141,21 +176,56 @@ def createMaximilianNet(spectrogramLayer, outputs):
     model.add(Conv2D(24, kernel_size=(12,12), activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(ReLU())
+    model.add(Activation('relu'))
     model.add(Dropout(rate=0.5))
 
     #2
     model.add(Conv2D(48, kernel_size=(8,8), activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(ReLU())
+    model.add(Activation('relu'))
     model.add(Dropout(rate=0.5))
 
     #3
     model.add(Conv2D(96, kernel_size=(4,4), activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(ReLU())
+    model.add(Activation('relu'))
+    model.add(Dropout(rate=0.5))
+
+    #4
+    model.add(Flatten())
+    model.add(Dense(outputs, activation='softmax'))
+
+    model.compile('adam', 'categorical_crossentropy', metrics=['accuracy', 'mse'])
+    return model
+
+def createRawNet(outputs):
+    #create model
+    model = Sequential()
+    model.add(spectrogramLayer)
+
+    #add model layers
+    #1
+    # input_shape=(64, 64, numberOfChannels),
+    model.add(Conv2D(24, kernel_size=(12,12), activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPool2D(pool_size=(2,2)))
+    model.add(Activation('relu'))
+    model.add(Dropout(rate=0.5))
+
+    #2
+    model.add(Conv2D(48, kernel_size=(8,8), activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPool2D(pool_size=(2,2)))
+    model.add(Activation('relu'))
+    model.add(Dropout(rate=0.5))
+
+    #3
+    model.add(Conv2D(96, kernel_size=(4,4), activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPool2D(pool_size=(2,2)))
+    model.add(Activation('relu'))
     model.add(Dropout(rate=0.5))
 
     #4
