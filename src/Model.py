@@ -22,8 +22,6 @@ def createCNN(networkType, numberOfChannels, frameSize, spectroWindowSize, spect
         return True
     elif networkType == NetworkType.CNN_PROPOSED_SMALL:
         return createProposedSmall(spectrogramLayer, numberOfClasses)
-    elif networkType == NetworkType.CNN_MAXIMLIAN:
-        return createMaximilianNet(spectrogramLayer, numberOfClasses)
     elif networkType == NetworkType.CNN_RAW:
         return createRawNet(spectrogramLayer, numberOfClasses)
     else:
@@ -32,25 +30,45 @@ def createCNN(networkType, numberOfChannels, frameSize, spectroWindowSize, spect
 def plotAndSaveHistory(history):
     # Plot training & validation accuracy values
     plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
     plt.title('Model accuracy')
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
-    plt.legend(['Train', 'Test'], loc='upper left')
-    plt.show()
+   # plt.legend(['Train', 'Test'], loc='upper left')
     currentTimestamp = str(int(round(time.time())))
     plt.savefig('models/accucary' + currentTimestamp + '.png')
+    plt.show()
+
+    plt.plot(history.history['loss'])
+    plt.title('Model loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.show()
+    plt.savefig('models/loss' + currentTimestamp + '.png')
+
+    plt.plot(history.history['val_acc'])
+    plt.title('Model Validation Accuracy')
+    plt.ylabel('Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.savefig('models/valAcc' + currentTimestamp + '.png')
+    plt.show()
+
+    plt.plot(history.history['val_loss'])
+    plt.title('Model Validation Loss')
+    plt.ylabel('Validation Loss')
+    plt.xlabel('Epoch')
+    plt.savefig('models/valLoss' + currentTimestamp + '.png')
+    plt.show()
 
     # Plot training & validation loss values
+    
     plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
     plt.title('Model loss')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Train', 'Test'], loc='upper left')
-    plt.show()
     plt.savefig('models/loss' + currentTimestamp + '.png')
-
+    plt.show()
+    
 def loadModel(path):
      print("Loading model from path: ", path)
      model = load_model(path,
@@ -158,41 +176,6 @@ def createProposedSmall(spectrogramLayer, outputs):
     #model.add(Activation('relu'))
     #model.add(Dropout(rate=0.5))
 	
-    #4
-    model.add(Flatten())
-    model.add(Dense(outputs, activation='softmax'))
-
-    model.compile('adam', 'categorical_crossentropy', metrics=['accuracy', 'mse'])
-    return model
-
-def createMaximilianNet(spectrogramLayer, outputs):
-    #create model
-    model = Sequential()
-    model.add(spectrogramLayer)
-
-    #add model layers
-    #1
-    # input_shape=(64, 64, numberOfChannels),
-    model.add(Conv2D(24, kernel_size=(12,12), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Activation('relu'))
-    model.add(Dropout(rate=0.5))
-
-    #2
-    model.add(Conv2D(48, kernel_size=(8,8), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Activation('relu'))
-    model.add(Dropout(rate=0.5))
-
-    #3
-    model.add(Conv2D(96, kernel_size=(4,4), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Activation('relu'))
-    model.add(Dropout(rate=0.5))
-
     #4
     model.add(Flatten())
     model.add(Dense(outputs, activation='softmax'))

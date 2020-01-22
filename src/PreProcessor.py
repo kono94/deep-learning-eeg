@@ -62,11 +62,7 @@ def preProcess(X, Y, numberOfChannels, numberOfClasses, cropWindowSize, cropWind
 
     prevLabel = Y[0]
     dataSetLen = len(X)
-   # xSwap = np.swapaxes(X,0,1)
-   # for ch in range(0, numberOfChannels, 1):
-   #     xSwap[ch] = applyFilters(xSwap[ch], fs)
-	
-   # X = np.swapaxes(xSwap,0,1)
+    
     for i in range(0, dataSetLen, 1):
         sys.stdout.write("Processing csv: %d%% \r" % (i/dataSetLen * 100))
         sys.stdout.flush()

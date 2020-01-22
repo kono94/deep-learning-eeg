@@ -26,9 +26,9 @@ def help():
 # 80% training, 20% validation data
 trainSplit = 0.8
 # number of samples to work through before updating the internal model parameters
-batchSize = 512
+batchSize = 128
 # number of passes over the entire dataset
-nrOfEpochs = 50
+nrOfEpochs = 20
 # window size of the generated spectrograms
 spectroWindowSize = 128
 # defines the grade of overlapping between spectrogram windows

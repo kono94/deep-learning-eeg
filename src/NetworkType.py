@@ -4,5 +4,4 @@ class NetworkType(Enum):
     CNN_SHALLOW = 2
     CNN_DEEP = 3
     CNN_PROPOSED_SMALL= 4
-    CNN_MAXIMLIAN = 5
-    CNN_RAW = 6
+    CNN_RAW = 5
