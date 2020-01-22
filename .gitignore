@@ -4,7 +4,9 @@ MNIST_data
 .venv/
 .vscode
 env/
-data/
+data/**
+!data/.gitkeep
 .DS_STORE
 **/.DS_STORE
 .git.bfg-report/
+.vscode
