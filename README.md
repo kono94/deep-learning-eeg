@@ -1,3 +1,5 @@
+# Presentation (german)
+https://sites.google.com/view/alpha-mind-games/startseite/projekt-helm/einleitung
 ## Create Virtual Environment
 ```bash
     python3 -m venv .venv
